@@ -236,7 +236,7 @@ td,
   align-items: center;
   gap: 16px;
   padding: 16px 30px;
-  background: rgba(246, 247, 251, 0.85);
+  background: var(--topbar-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--ink-200);
 }

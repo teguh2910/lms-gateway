@@ -26,6 +26,9 @@
   --surface: #ffffff;
   --bg: #f6f7fb;
 
+  /* translucent topbar background (frosted glass) */
+  --topbar-bg: rgba(246, 247, 251, 0.85);
+
   /* sidebar (kept dark in both themes) */
   --side-bg-1: #161d36;
   --side-bg-2: #0b1020;
@@ -71,6 +74,8 @@
 
   --surface: #161d2c;
   --bg: #0d1320;
+
+  --topbar-bg: rgba(13, 19, 32, 0.82);
 
   --side-bg-1: #11182a;
   --side-bg-2: #080b15;
