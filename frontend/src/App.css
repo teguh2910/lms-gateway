@@ -6,6 +6,28 @@
   min-height: 100vh;
 }
 
+/* Smooth theme transitions on common surfaces */
+.topbar,
+.form-card,
+.detail-card,
+.table-container,
+.stat-card,
+.panel,
+.quick-link,
+.icon-btn,
+.topbar-user,
+.menu-btn,
+th,
+td,
+.form-group input,
+.form-group textarea,
+.form-group select,
+.search-bar input,
+.search-bar select {
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
 .scrim {
   display: none;
 }
@@ -14,8 +36,8 @@
 .sidebar {
   width: 264px;
   flex-shrink: 0;
-  background: #0b1020;
-  background-image: radial-gradient(120% 80% at 0% 0%, #161d36 0%, #0b1020 55%);
+  background: var(--side-bg-2);
+  background-image: radial-gradient(120% 80% at 0% 0%, var(--side-bg-1) 0%, var(--side-bg-2) 55%);
   color: #cbd5e1;
   display: flex;
   flex-direction: column;
@@ -24,7 +46,7 @@
   height: 100vh;
   padding: 22px 16px;
   z-index: 40;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--side-border);
 }
 
 .brand {
@@ -275,6 +297,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Theme toggle accent on hover */
+.theme-toggle:hover {
+  color: var(--accent-600);
+}
+
 .icon-btn .dot {
   position: absolute;
   top: 9px;
@@ -449,7 +476,7 @@
 }
 
 .detail-card pre {
-  background: var(--ink-900);
+  background: #0b1020;
   color: #e2e8f0;
   padding: 16px;
   border-radius: var(--radius-sm);
@@ -855,6 +882,30 @@ td.empty, .empty {
 .login-container {
   display: flex;
   min-height: 100vh;
+  position: relative;
+}
+
+.login-theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  border: 1px solid var(--ink-200);
+  background: var(--surface);
+  color: var(--ink-600);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: color 0.18s, transform 0.18s;
+}
+
+.login-theme-toggle:hover {
+  color: var(--accent-600);
+  transform: scale(1.05);
 }
 
 .login-aside {

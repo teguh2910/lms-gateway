@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiPost } from '../api';
-import { IconSparkle } from '../components/Icons';
+import { IconSparkle, IconSun, IconMoon } from '../components/Icons';
+import { useTheme } from '../theme';
 
 export default function Login() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -12,6 +13,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
 
   const storeSession = (data: Record<string, unknown>) => {
     const user = (data.user || {}) as Record<string, unknown>;
@@ -50,6 +52,14 @@ export default function Login() {
 
   return (
     <div className="login-container">
+      <button
+        className="login-theme-toggle"
+        onClick={toggle}
+        aria-label="Toggle theme"
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+      </button>
       <div className="login-aside">
         <div className="brand">
           <div className="brand-mark"><IconSparkle size={20} /></div>

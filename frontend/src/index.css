@@ -26,6 +26,11 @@
   --surface: #ffffff;
   --bg: #f6f7fb;
 
+  /* sidebar (kept dark in both themes) */
+  --side-bg-1: #161d36;
+  --side-bg-2: #0b1020;
+  --side-border: rgba(255, 255, 255, 0.06);
+
   --success-bg: #dcfce7;
   --success-fg: #15803d;
   --danger-bg: #fee2e2;
@@ -50,6 +55,46 @@
   color-scheme: light;
 }
 
+/* ============ Dark theme ============ */
+[data-theme='dark'] {
+  /* invert the ink scale so existing utilities keep working */
+  --ink-900: #f1f5f9;
+  --ink-800: #e2e8f0;
+  --ink-700: #cbd5e1;
+  --ink-600: #94a3b8;
+  --ink-500: #8b95a7;
+  --ink-400: #64748b;
+  --ink-300: #3f4a5e;
+  --ink-200: #2a3344;
+  --ink-100: #1f2737;
+  --ink-50: #1a2130;
+
+  --surface: #161d2c;
+  --bg: #0d1320;
+
+  --side-bg-1: #11182a;
+  --side-bg-2: #080b15;
+  --side-border: rgba(255, 255, 255, 0.05);
+
+  --brand-50: rgba(99, 102, 241, 0.14);
+
+  --success-bg: rgba(34, 197, 94, 0.16);
+  --success-fg: #4ade80;
+  --danger-bg: rgba(239, 68, 68, 0.16);
+  --danger-fg: #f87171;
+  --warn-bg: rgba(245, 158, 11, 0.16);
+  --warn-fg: #fbbf24;
+  --info-bg: rgba(59, 130, 246, 0.16);
+  --info-fg: #60a5fa;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -68,6 +113,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 #root {

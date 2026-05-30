@@ -14,7 +14,9 @@ import Users from './pages/Users';
 import {
   IconGrid, IconBook, IconUsers, IconVideo, IconFolder, IconQuiz,
   IconTask, IconChat, IconShield, IconLogout, IconBell, IconMenu, IconSparkle,
+  IconSun, IconMoon,
 } from './components/Icons';
+import { useTheme } from './theme';
 import './App.css';
 
 const NAV = [
@@ -45,6 +47,7 @@ function initials(name: string) {
 
 function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const { theme, toggle } = useTheme();
   const location = useLocation();
   const name = localStorage.getItem('user_name') || 'User';
   const role = localStorage.getItem('user_role') || 'student';
@@ -105,6 +108,14 @@ function Layout({ children }: { children: React.ReactNode }) {
             <span className="crumbs">Edura / {title}</span>
           </div>
           <div className="topbar-actions">
+            <button
+              className="icon-btn theme-toggle"
+              onClick={toggle}
+              aria-label="Toggle theme"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+            </button>
             <button className="icon-btn" aria-label="Notifications">
               <IconBell size={20} />
               <span className="dot" />
