@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { IconPlus, IconEdit, IconTrash } from '../components/Icons';
 
 interface Subject {
   id: string;
@@ -68,9 +69,12 @@ export default function Subjects() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Subjects</h1>
+        <div>
+          <h1>Subjects</h1>
+          <p className="subtitle">Manage course subjects and their topics</p>
+        </div>
         <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
-          + New Subject
+          <IconPlus /> New Subject
         </button>
       </div>
 
@@ -145,8 +149,8 @@ export default function Subjects() {
                 <td>{s.default_semester}</td>
                 <td>{s.programme_name}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => handleEdit(s)}>Edit</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(s.id)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(s)}><IconEdit /> Edit</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(s.id)}><IconTrash /> Delete</button>
                 </td>
               </tr>
             ))}

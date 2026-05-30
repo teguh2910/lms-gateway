@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { IconPlus, IconEdit, IconTrash } from '../components/Icons';
 
 interface Class {
   id: string;
@@ -66,9 +67,12 @@ export default function Classes() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Classes</h1>
+        <div>
+          <h1>Classes</h1>
+          <p className="subtitle">Organize student classes by programme</p>
+        </div>
         <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
-          + New Class
+          <IconPlus /> New Class
         </button>
       </div>
 
@@ -130,8 +134,8 @@ export default function Classes() {
                 <td>{c.programme_name}</td>
                 <td>{c.university_name}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => handleEdit(c)}>Edit</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(c)}><IconEdit /> Edit</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}><IconTrash /> Delete</button>
                 </td>
               </tr>
             ))}

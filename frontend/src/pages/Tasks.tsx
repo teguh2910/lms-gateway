@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiGet, apiPost, apiDelete } from '../api';
+import { IconPlus } from '../components/Icons';
 
 export default function Tasks() {
   const [taskId, setTaskId] = useState('');
@@ -48,8 +49,11 @@ export default function Tasks() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Tasks</h1>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Task</button>
+        <div>
+          <h1>Tasks</h1>
+          <p className="subtitle">Assign work and grade submissions</p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Task</button>
       </div>
 
       {error && <div className="error-banner">{error}</div>}

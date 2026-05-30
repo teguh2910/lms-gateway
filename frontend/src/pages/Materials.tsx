@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { IconPlus, IconEdit, IconTrash, IconDownload } from '../components/Icons';
 
 interface Material {
   id: string;
@@ -70,9 +71,12 @@ export default function Materials() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Materials</h1>
+        <div>
+          <h1>Materials</h1>
+          <p className="subtitle">Upload and share learning resources</p>
+        </div>
         <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
-          + New Material
+          <IconPlus /> New Material
         </button>
       </div>
 
@@ -130,9 +134,9 @@ export default function Materials() {
                 <td>{m.file_type}</td>
                 <td>{m.source}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => handleEdit(m)}>Edit</button>
-                  <button className="btn-sm btn-success" onClick={() => handleDownload(m.id)}>Download</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(m.id)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(m)}><IconEdit /> Edit</button>
+                  <button className="btn-sm btn-success" onClick={() => handleDownload(m.id)}><IconDownload /> Download</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(m.id)}><IconTrash /> Delete</button>
                 </td>
               </tr>
             ))}

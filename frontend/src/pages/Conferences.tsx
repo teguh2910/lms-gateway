@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { IconPlus, IconEdit, IconTrash, IconVideo } from '../components/Icons';
 
 interface Conference {
   id: string;
@@ -74,9 +75,12 @@ export default function Conferences() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Conferences</h1>
+        <div>
+          <h1>Conferences</h1>
+          <p className="subtitle">Schedule and manage online meetings</p>
+        </div>
         <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
-          + New Conference
+          <IconPlus /> New Conference
         </button>
       </div>
 
@@ -134,9 +138,9 @@ export default function Conferences() {
                 <td>{c.status}</td>
                 <td>{c.start_time}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => handleEdit(c)}>Edit</button>
-                  <button className="btn-sm btn-success" onClick={() => handleJoin(c.id)}>Join</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(c)}><IconEdit /> Edit</button>
+                  <button className="btn-sm btn-success" onClick={() => handleJoin(c.id)}><IconVideo size={14} /> Join</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}><IconTrash /> Delete</button>
                 </td>
               </tr>
             ))}

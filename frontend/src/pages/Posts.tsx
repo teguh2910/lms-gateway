@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiGet, apiPost } from '../api';
+import { IconPlus } from '../components/Icons';
 
 const POST_TYPES = [
   { label: 'Diskusi', value: 'DISKUSI' },
@@ -59,8 +60,11 @@ export default function Posts() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Posts</h1>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Post</button>
+        <div>
+          <h1>Posts</h1>
+          <p className="subtitle">Share announcements and discussions</p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Post</button>
       </div>
 
       {error && <div className="error-banner">{error}</div>}

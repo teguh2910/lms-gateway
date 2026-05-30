@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { IconPlus, IconEdit, IconTrash } from '../components/Icons';
 
 interface User {
   id: string;
@@ -74,9 +75,12 @@ export default function Users() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Users</h1>
+        <div>
+          <h1>Users</h1>
+          <p className="subtitle">Manage accounts, roles and access</p>
+        </div>
         <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm, is_active: true }); }}>
-          + New User
+          <IconPlus /> New User
         </button>
       </div>
 
@@ -149,8 +153,8 @@ export default function Users() {
                 <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
                 <td>{u.is_active ? 'Yes' : 'No'}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => handleEdit(u)}>Edit</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(u)}><IconEdit /> Edit</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(u.id)}><IconTrash /> Delete</button>
                 </td>
               </tr>
             ))}

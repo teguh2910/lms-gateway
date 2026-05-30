@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiGet, apiPost, apiDelete } from '../api';
+import { IconPlus } from '../components/Icons';
 
 export default function Quizzes() {
   const [quizId, setQuizId] = useState('');
@@ -45,8 +46,11 @@ export default function Quizzes() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>Quizzes</h1>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Quiz</button>
+        <div>
+          <h1>Quizzes</h1>
+          <p className="subtitle">Create assessments and review scores</p>
+        </div>
+        <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Quiz</button>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
