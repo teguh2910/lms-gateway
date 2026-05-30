@@ -1,30 +1,57 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
 
+interface Material {
+  id: string;
+  subject_class_id?: string;
+  topic_subject_id?: string;
+  type?: string;
+  file_type?: string;
+  name?: string;
+  storage_id?: string;
+  source?: string;
+}
+
+const emptyForm = {
+  subject_class_id: '', topic_subject_id: '', type: 'FILE', file_type: 'pdf',
+  name: '', storage_id: '', source: '',
+};
+
 export default function Materials() {
-  const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [items, setItems] = useState<Material[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: '', description: '', class_id: '', type: '', file_url: '', content: '' });
+  const [form, setForm] = useState({ ...emptyForm });
+  const [error, setError] = useState('');
 
   const load = async () => {
     const data = await apiGet('/materials?limit=50&offset=0');
-    if (Array.isArray(data)) setItems(data);
-    else setItems([]);
+    setItems(data?.materials || []);
   };
 
   useEffect(() => { load(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editing) {
-      await apiPut(`/materials/${editing}`, form);
-    } else {
-      await apiPost('/materials', form);
-    }
+    setError('');
+    const res = editing
+      ? await apiPut(`/materials/${editing}`, form)
+      : await apiPost('/materials', form);
+    if (res?.error) { setError(res.error); return; }
     setShowForm(false);
     setEditing(null);
+    setForm({ ...emptyForm });
     load();
+  };
+
+  const handleEdit = (m: Material) => {
+    setEditing(m.id);
+    setForm({
+      subject_class_id: m.subject_class_id || '', topic_subject_id: m.topic_subject_id || '',
+      type: m.type || 'FILE', file_type: m.file_type || 'pdf', name: m.name || '',
+      storage_id: m.storage_id || '', source: m.source || '',
+    });
+    setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -35,46 +62,51 @@ export default function Materials() {
   };
 
   const handleDownload = async (id: string) => {
-    await apiPost(`/materials/${id}/download`);
-    alert('Material marked as downloaded');
+    const res = await apiPost(`/materials/${id}/download`, {});
+    if (res?.error) alert('Error: ' + res.error);
+    else alert('Material marked as downloaded');
   };
 
   return (
     <div className="page">
       <div className="page-header">
         <h1>Materials</h1>
-        <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); }}>
+        <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
           + New Material
         </button>
       </div>
+
+      {error && <div className="error-banner">{error}</div>}
 
       {showForm && (
         <div className="form-card">
           <h3>{editing ? 'Edit Material' : 'Create Material'}</h3>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Title</label>
-              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+              <label>Name</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Type</label>
+                <input value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>File Type</label>
+                <input value={form.file_type} onChange={e => setForm({ ...form, file_type: e.target.value })} />
+              </div>
             </div>
             <div className="form-group">
-              <label>Description</label>
-              <input value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+              <label>Subject Class ID</label>
+              <input value={form.subject_class_id} onChange={e => setForm({ ...form, subject_class_id: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Class ID</label>
-              <input value={form.class_id} onChange={e => setForm({...form, class_id: e.target.value})} />
+              <label>Topic Subject ID</label>
+              <input value={form.topic_subject_id} onChange={e => setForm({ ...form, topic_subject_id: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Type</label>
-              <input value={form.type} onChange={e => setForm({...form, type: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>File URL</label>
-              <input value={form.file_url} onChange={e => setForm({...form, file_url: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Content</label>
-              <textarea value={form.content} onChange={e => setForm({...form, content: e.target.value})} />
+              <label>Source (URL)</label>
+              <input value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} />
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-primary">Save</button>
@@ -87,18 +119,20 @@ export default function Materials() {
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>ID</th><th>Title</th><th>Type</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Type</th><th>File Type</th><th>Source</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item.id as string}>
-                <td>{item.id as string}</td>
-                <td>{(item.field_2 || item.field_3 || '-') as string}</td>
-                <td>{(item.field_4 || '-') as string}</td>
+            {items.length === 0 && <tr><td colSpan={5} className="empty">No materials yet</td></tr>}
+            {items.map((m) => (
+              <tr key={m.id}>
+                <td>{m.name}</td>
+                <td>{m.type}</td>
+                <td>{m.file_type}</td>
+                <td>{m.source}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => { setEditing(item.id as string); setShowForm(true); }}>Edit</button>
-                  <button className="btn-sm btn-success" onClick={() => handleDownload(item.id as string)}>Download</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(item.id as string)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(m)}>Edit</button>
+                  <button className="btn-sm btn-success" onClick={() => handleDownload(m.id)}>Download</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(m.id)}>Delete</button>
                 </td>
               </tr>
             ))}

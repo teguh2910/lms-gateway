@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { apiGet, apiPost, apiDelete } from '../api';
 
 export default function Tasks() {
   const [taskId, setTaskId] = useState('');
   const [task, setTask] = useState<Record<string, unknown> | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', class_id: '', due_date: '', max_score: 100, type: '' });
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    subject_class_id: '', type: 'TUGAS', name: '', description: '', end_date: '',
+  });
 
   const loadTask = async () => {
     if (!taskId) return;
@@ -15,15 +18,12 @@ export default function Tasks() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await apiPost('/tasks', form);
+    setError('');
+    const res = await apiPost('/tasks', form);
+    if (res?.error) { setError(res.error); return; }
     setShowForm(false);
-    alert('Task created');
-  };
-
-  const handleUpdate = async () => {
-    if (!taskId) return;
-    await apiPut(`/tasks/${taskId}`, form);
-    alert('Task updated');
+    if (res?.id) setTaskId(res.id);
+    alert('Task created: ' + (res?.id || ''));
   };
 
   const handleDelete = async () => {
@@ -37,8 +37,12 @@ export default function Tasks() {
 
   const handleSubmit = async () => {
     if (!taskId) return;
-    await apiPost(`/tasks/${taskId}/submit`, { file_url: '', notes: 'Submitted via UI' });
-    alert('Task submitted');
+    const res = await apiPost(`/tasks/${taskId}/submit`, {
+      student_id: localStorage.getItem('user_id'),
+      answer: 'Submitted via UI',
+    });
+    if (res?.error) alert('Error: ' + res.error);
+    else alert('Task submitted');
   };
 
   return (
@@ -48,17 +52,20 @@ export default function Tasks() {
         <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Task</button>
       </div>
 
+      {error && <div className="error-banner">{error}</div>}
+
       <div className="search-bar">
         <input placeholder="Enter Task ID" value={taskId} onChange={e => setTaskId(e.target.value)} />
         <button className="btn-primary" onClick={loadTask}>Load</button>
       </div>
 
-      {task && (
+      {task && !task.error && (
         <div className="detail-card">
-          <h3>Task Details</h3>
-          <pre>{JSON.stringify(task, null, 2)}</pre>
+          <h3>{String(task.name || 'Task')}</h3>
+          <p>{String(task.description || '')}</p>
+          <p><strong>Type:</strong> {String(task.type || '-')}</p>
+          <p><strong>Due:</strong> {String(task.end_date || '-')}</p>
           <div className="form-actions">
-            <button className="btn-sm" onClick={handleUpdate}>Update</button>
             <button className="btn-sm btn-success" onClick={handleSubmit}>Submit</button>
             <button className="btn-sm btn-danger" onClick={handleDelete}>Delete</button>
           </div>
@@ -70,28 +77,26 @@ export default function Tasks() {
           <h3>Create Task</h3>
           <form onSubmit={handleCreate}>
             <div className="form-group">
-              <label>Title</label>
-              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+              <label>Name</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="form-group">
               <label>Description</label>
-              <input value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Class ID</label>
-              <input value={form.class_id} onChange={e => setForm({...form, class_id: e.target.value})} />
+              <label>Subject Class ID</label>
+              <input value={form.subject_class_id} onChange={e => setForm({ ...form, subject_class_id: e.target.value })} />
             </div>
-            <div className="form-group">
-              <label>Due Date</label>
-              <input type="datetime-local" value={form.due_date} onChange={e => setForm({...form, due_date: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Max Score</label>
-              <input type="number" value={form.max_score} onChange={e => setForm({...form, max_score: +e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Type</label>
-              <input value={form.type} onChange={e => setForm({...form, type: e.target.value})} />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Type</label>
+                <input value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>Due Date</label>
+                <input type="datetime-local" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
+              </div>
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-primary">Create</button>

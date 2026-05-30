@@ -1,34 +1,66 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"lms-gateway/internal/grpcclient"
+	userspb "lms-gateway/pb/user/users"
 )
 
-// Login is a simple mock login that returns user metadata
-// In production, this would validate credentials against a user service
-func Login(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+func userConn(w http.ResponseWriter) (*grpcConn, bool) {
+	addr := grpcclient.GetAddresses().UserService
+	conn, err := grpcclient.Dial(addr)
+	if err != nil {
+		writeError(w, http.StatusServiceUnavailable, "user service unavailable")
+		return nil, false
 	}
+	return &grpcConn{conn: conn}, true
+}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+// Login authenticates against the user service and returns a JWT + user
+func Login(w http.ResponseWriter, r *http.Request) {
+	c, ok := userConn(w)
+	if !ok {
+		return
+	}
+	defer c.Close()
+
+	in := &userspb.LoginInput{}
+	if err := readProto(r, in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	// Mock response - in production this would validate against user-services
-	resp := map[string]interface{}{
-		"token":            "mock-jwt-token",
-		"user_id":          "550e8400-e29b-41d4-a716-446655440000",
-		"university_id":    "660e8400-e29b-41d4-a716-446655440000",
-		"program_studi_id": "770e8400-e29b-41d4-a716-446655440000",
-		"name":             "Test User",
-		"email":            req.Email,
-		"role":             "teacher",
+	client := userspb.NewUserServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Login(ctx, in)
+	if err != nil {
+		handleGRPCError(w, err)
+		return
+	}
+	writeProto(w, resp)
+}
+
+// Register creates a new user account
+func Register(w http.ResponseWriter, r *http.Request) {
+	c, ok := userConn(w)
+	if !ok {
+		return
+	}
+	defer c.Close()
+
+	in := &userspb.RegisterInput{}
+	if err := readProto(r, in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	client := userspb.NewUserServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Register(ctx, in)
+	if err != nil {
+		handleGRPCError(w, err)
+		return
+	}
+	writeProto(w, resp)
 }

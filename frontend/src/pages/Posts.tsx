@@ -1,12 +1,25 @@
 import { useState } from 'react';
-import { apiGet, apiPost, apiPut } from '../api';
+import { apiGet, apiPost } from '../api';
+
+const POST_TYPES = [
+  { label: 'Diskusi', value: 'DISKUSI' },
+  { label: 'Material', value: 'MATERIAL' },
+  { label: 'Task', value: 'TASK' },
+  { label: 'Conference', value: 'CONFERENCE' },
+  { label: 'Quiz', value: 'QUIZ' },
+  { label: 'Info', value: 'INFO' },
+];
 
 export default function Posts() {
   const [postId, setPostId] = useState('');
   const [post, setPost] = useState<Record<string, unknown> | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [comment, setComment] = useState('');
-  const [form, setForm] = useState({ title: '', content: '', class_id: '', type: 'announcement', is_published: true });
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    subject_class_id: '', topic_subject_id: '', title: '', description: '',
+    type: 'DISKUSI', is_allow_to_comment: true, is_published: true,
+  });
 
   const loadPost = async () => {
     if (!postId) return;
@@ -16,26 +29,29 @@ export default function Posts() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await apiPost('/posts', form);
+    setError('');
+    const res = await apiPost('/posts', form);
+    if (res?.error) { setError(res.error); return; }
     setShowForm(false);
-    alert('Post created');
-  };
-
-  const handleUpdate = async () => {
-    if (!postId) return;
-    await apiPut(`/posts/${postId}`, form);
-    alert('Post updated');
+    if (res?.id) setPostId(res.id);
+    alert('Post created: ' + (res?.id || ''));
   };
 
   const handleUnpublish = async () => {
     if (!postId) return;
-    await apiPost(`/posts/${postId}/unpublish`);
-    alert('Post unpublished');
+    await apiPost(`/posts/${postId}/unpublish`, {});
+    alert('Post publish status toggled');
+    loadPost();
   };
 
   const handleComment = async () => {
     if (!postId || !comment) return;
-    await apiPost(`/posts/${postId}/comment`, { content: comment });
+    const res = await apiPost(`/posts/${postId}/comment`, {
+      student_id: localStorage.getItem('user_id'),
+      student_name: localStorage.getItem('user_name') || 'Student',
+      comment,
+    });
+    if (res?.error) { alert('Error: ' + res.error); return; }
     setComment('');
     alert('Comment added');
   };
@@ -47,18 +63,22 @@ export default function Posts() {
         <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Post</button>
       </div>
 
+      {error && <div className="error-banner">{error}</div>}
+
       <div className="search-bar">
         <input placeholder="Enter Post ID" value={postId} onChange={e => setPostId(e.target.value)} />
         <button className="btn-primary" onClick={loadPost}>Load</button>
       </div>
 
-      {post && (
+      {post && !post.error && (
         <div className="detail-card">
-          <h3>Post Details</h3>
-          <pre>{JSON.stringify(post, null, 2)}</pre>
+          <h3>{String(post.title || 'Post')}</h3>
+          <p>{String(post.description || '')}</p>
+          <p><strong>Type:</strong> {String(post.type || '-')}</p>
+          <p><strong>Published:</strong> {String(post.is_published)}</p>
+          <p><strong>Allow comments:</strong> {String(post.is_allow_to_comment)}</p>
           <div className="form-actions">
-            <button className="btn-sm" onClick={handleUpdate}>Update</button>
-            <button className="btn-sm btn-danger" onClick={handleUnpublish}>Unpublish</button>
+            <button className="btn-sm btn-danger" onClick={handleUnpublish}>Toggle Publish</button>
           </div>
           <div className="comment-section">
             <h4>Add Comment</h4>
@@ -74,22 +94,31 @@ export default function Posts() {
           <form onSubmit={handleCreate}>
             <div className="form-group">
               <label>Title</label>
-              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+              <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
             </div>
             <div className="form-group">
-              <label>Content</label>
-              <textarea value={form.content} onChange={e => setForm({...form, content: e.target.value})} required />
+              <label>Description</label>
+              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Class ID</label>
-              <input value={form.class_id} onChange={e => setForm({...form, class_id: e.target.value})} />
+              <label>Subject Class ID</label>
+              <input value={form.subject_class_id} onChange={e => setForm({ ...form, subject_class_id: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>Topic Subject ID</label>
+              <input value={form.topic_subject_id} onChange={e => setForm({ ...form, topic_subject_id: e.target.value })} />
             </div>
             <div className="form-group">
               <label>Type</label>
-              <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
-                <option value="announcement">Announcement</option>
-                <option value="discussion">Discussion</option>
+              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                {POST_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
+            </div>
+            <div className="form-group checkbox">
+              <label>
+                <input type="checkbox" checked={form.is_allow_to_comment} onChange={e => setForm({ ...form, is_allow_to_comment: e.target.checked })} />
+                Allow comments
+              </label>
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-primary">Create</button>

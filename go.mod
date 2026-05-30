@@ -1,6 +1,6 @@
 module lms-gateway
 
-go 1.26.2
+go 1.25.0
 
 require (
 	google.golang.org/grpc v1.81.1

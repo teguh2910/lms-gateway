@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.env.*
+README.md
+LICENSE
+*.md
+frontend/node_modules/
+frontend/dist/
+tmp/

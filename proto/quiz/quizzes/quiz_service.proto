@@ -1,0 +1,18 @@
+syntax = "proto3";
+package quizzes;
+
+option go_package = "lms-gateway/pb/quiz/quizzes;quizzes";
+
+import "quiz/quizzes/quiz_message.proto";
+import "quiz/quizzes/quiz_input.proto";
+import "quiz/quizzes/generic_message.proto";
+
+service Quizzes {
+  rpc Update(QuizUpdateInput) returns (Quiz) {}
+  rpc Answer(QuizAnswerInput) returns (QuizAnswer) {}
+  rpc Get(Id) returns (Quiz){}
+  rpc GetResultQuiz(GetResultQuizInput) returns (QuizAnswer) {}
+  rpc Delete(Id) returns (BoolMessage){}
+  rpc Create(QuizCreateInput) returns (Quiz) {}
+  rpc ListScoresByQuizId(Id) returns (QuizScoreList) {}
+}

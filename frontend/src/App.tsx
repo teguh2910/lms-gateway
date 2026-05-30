@@ -9,6 +9,7 @@ import Materials from './pages/Materials';
 import Quizzes from './pages/Quizzes';
 import Tasks from './pages/Tasks';
 import Posts from './pages/Posts';
+import Users from './pages/Users';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <Link to="/quizzes">Quizzes</Link>
           <Link to="/tasks">Tasks</Link>
           <Link to="/posts">Posts</Link>
+          <Link to="/users">Users</Link>
         </nav>
         <div className="sidebar-footer">
           <button onClick={logout} className="btn-logout">Logout</button>
@@ -72,6 +74,9 @@ export default function App() {
         } />
         <Route path="/posts" element={
           <ProtectedRoute><Layout><Posts /></Layout></ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute><Layout><Users /></Layout></ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>

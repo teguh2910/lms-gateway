@@ -1,196 +1,145 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"lms-gateway/internal/grpcclient"
-
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protowire"
+	conferencespb "lms-gateway/pb/conference/conferences"
+	genericpb "lms-gateway/pb/conference/generic"
 )
 
-func ListConferences(w http.ResponseWriter, r *http.Request) {
+func conferenceConn(w http.ResponseWriter) (*grpcConn, bool) {
 	addr := grpcclient.GetAddresses().ConferenceService
 	conn, err := grpcclient.Dial(addr)
 	if err != nil {
 		writeError(w, http.StatusServiceUnavailable, "conference service unavailable")
+		return nil, false
+	}
+	return &grpcConn{conn: conn}, true
+}
+
+func ListConferences(w http.ResponseWriter, r *http.Request) {
+	c, ok := conferenceConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
+	client := conferencespb.NewConferenceServiceClient(c.conn)
 	ctx := grpcclient.ContextWithMetadata(r)
-
-	var buf []byte
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
-	keyword := r.URL.Query().Get("keyword")
-	classID := r.URL.Query().Get("class_id")
-
-	var paginationBuf []byte
-	if limit != "" {
-		l := parseUint(limit)
-		paginationBuf = protowire.AppendTag(paginationBuf, 1, protowire.VarintType)
-		paginationBuf = protowire.AppendVarint(paginationBuf, uint64(l))
-	}
-	if offset != "" {
-		o := parseUint(offset)
-		paginationBuf = protowire.AppendTag(paginationBuf, 2, protowire.VarintType)
-		paginationBuf = protowire.AppendVarint(paginationBuf, uint64(o))
-	}
-	if keyword != "" {
-		paginationBuf = protowire.AppendTag(paginationBuf, 3, protowire.BytesType)
-		paginationBuf = protowire.AppendString(paginationBuf, keyword)
-	}
-
-	if len(paginationBuf) > 0 {
-		buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-		buf = protowire.AppendBytes(buf, paginationBuf)
-	}
-	if classID != "" {
-		buf = protowire.AppendTag(buf, 2, protowire.BytesType)
-		buf = protowire.AppendString(buf, classID)
-	}
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/conferences.ConferenceService/List", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	resp, err := client.List(ctx, &conferencespb.ConferenceListInput{
+		Pagination: &genericpb.Pagination{
+			Limit:   parseUint(r.URL.Query().Get("limit")),
+			Offset:  parseUint(r.URL.Query().Get("offset")),
+			Keyword: r.URL.Query().Get("keyword"),
+		},
+		SubjectClassId: r.URL.Query().Get("subject_class_id"),
+	})
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func GetConference(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ConferenceService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "conference service unavailable")
+	c, ok := conferenceConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
+	client := conferencespb.NewConferenceServiceClient(c.conn)
 	ctx := grpcclient.ContextWithMetadata(r)
-
-	var buf []byte
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, id)
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/conferences.ConferenceService/Get", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	resp, err := client.Get(ctx, &genericpb.Id{Id: r.PathValue("id")})
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func CreateConference(w http.ResponseWriter, r *http.Request) {
-	addr := grpcclient.GetAddresses().ConferenceService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "conference service unavailable")
+	c, ok := conferenceConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
-	ctx := grpcclient.ContextWithMetadata(r)
-
-	var input map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	in := &conferencespb.ConferenceInput{}
+	if err := readProto(r, in); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
-	var buf []byte
-	buf = appendStringField(buf, 1, input, "class_id")
-	buf = appendStringField(buf, 2, input, "title")
-	buf = appendStringField(buf, 3, input, "description")
-	buf = appendStringField(buf, 4, input, "start_time")
-	buf = appendStringField(buf, 5, input, "end_time")
-	buf = appendStringField(buf, 6, input, "meeting_url")
-	buf = appendStringField(buf, 7, input, "type")
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/conferences.ConferenceService/Create", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	client := conferencespb.NewConferenceServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Create(ctx, in)
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func UpdateConference(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ConferenceService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "conference service unavailable")
+	c, ok := conferenceConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
-	ctx := grpcclient.ContextWithMetadata(r)
-
-	var input map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	in := &conferencespb.Conference{}
+	if err := readProto(r, in); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
-	var buf []byte
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, id)
-	buf = appendStringField(buf, 2, input, "class_id")
-	buf = appendStringField(buf, 3, input, "title")
-	buf = appendStringField(buf, 4, input, "description")
-	buf = appendStringField(buf, 5, input, "start_time")
-	buf = appendStringField(buf, 6, input, "end_time")
-	buf = appendStringField(buf, 7, input, "meeting_url")
-	buf = appendStringField(buf, 8, input, "type")
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/conferences.ConferenceService/Update", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	in.Id = r.PathValue("id")
+	client := conferencespb.NewConferenceServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Update(ctx, in)
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func DeleteConference(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ConferenceService
-	invokeDelete(w, r, addr, "/conferences.ConferenceService/Delete", id)
-}
-
-func JoinConference(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ConferenceService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "conference service unavailable")
+	c, ok := conferenceConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
+	client := conferencespb.NewConferenceServiceClient(c.conn)
 	ctx := grpcclient.ContextWithMetadata(r)
-
-	var buf []byte
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, id)
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/conferences.ConferenceParticipantService/Create", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	resp, err := client.Delete(ctx, &genericpb.Id{Id: r.PathValue("id")})
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
+	writeProto(w, resp)
+}
 
-	writeProtoJSON(w, resp.data)
+func JoinConference(w http.ResponseWriter, r *http.Request) {
+	c, ok := conferenceConn(w)
+	if !ok {
+		return
+	}
+	defer c.Close()
+
+	in := &conferencespb.ConferenceParticipantInput{}
+	if err := readProto(r, in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	in.ConferenceId = r.PathValue("id")
+	client := conferencespb.NewConferenceParticipantServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Create(ctx, in)
+	if err != nil {
+		handleGRPCError(w, err)
+		return
+	}
+	writeProto(w, resp)
 }

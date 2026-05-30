@@ -30,8 +30,39 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// API index
+	mux.HandleFunc("GET /api/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{
+			"service": "LMS Gateway",
+			"version": "1.0.0",
+			"endpoints": {
+				"auth": "/api/auth/login",
+				"register": "/api/auth/register",
+				"users": "/api/users",
+				"subjects": "/api/subjects",
+				"classes": "/api/classes",
+				"subject_classes": "/api/subject-classes",
+				"conferences": "/api/conferences",
+				"materials": "/api/materials",
+				"quizzes": "/api/quizzes/{id}",
+				"tasks": "/api/tasks/{id}",
+				"posts": "/api/posts/{id}",
+				"storage": "/api/storage/{id}"
+			}
+		}`))
+	})
+
 	// Auth routes
 	mux.HandleFunc("POST /api/auth/login", handler.Login)
+	mux.HandleFunc("POST /api/auth/register", handler.Register)
+
+	// User routes
+	mux.HandleFunc("GET /api/users", handler.ListUsers)
+	mux.HandleFunc("GET /api/users/{id}", handler.GetUser)
+	mux.HandleFunc("PUT /api/users/{id}", handler.UpdateUser)
+	mux.HandleFunc("POST /api/users/{id}/change-password", handler.ChangePassword)
+	mux.HandleFunc("DELETE /api/users/{id}", handler.DeleteUser)
 
 	// Subject routes
 	mux.HandleFunc("GET /api/subjects", handler.ListSubjects)
@@ -97,9 +128,20 @@ func main() {
 	mux.HandleFunc("GET /api/storage/{id}", handler.GetFile)
 	mux.HandleFunc("DELETE /api/storage/{id}", handler.DeleteFile)
 
-	// Serve frontend static files
-	fs := http.FileServer(http.Dir("./frontend/dist"))
-	mux.Handle("GET /", fs)
+	// Serve frontend - SPA fallback (serve index.html for client-side routes)
+	frontendDir := "./frontend/dist"
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		// Try to serve static file first
+		path := frontendDir + r.URL.Path
+		if r.URL.Path != "/" {
+			if _, err := os.Stat(path); err == nil {
+				http.ServeFile(w, r, path)
+				return
+			}
+		}
+		// Fallback to index.html for SPA routing
+		http.ServeFile(w, r, frontendDir+"/index.html")
+	})
 
 	// Apply middleware
 	wrapped := middleware.CORS(middleware.Logger(logger, mux))

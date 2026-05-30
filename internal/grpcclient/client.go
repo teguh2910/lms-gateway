@@ -19,6 +19,7 @@ type ServiceAddresses struct {
 	TaskService       string
 	PostService       string
 	StorageService    string
+	UserService       string
 }
 
 // GetAddresses returns service addresses from environment
@@ -31,6 +32,7 @@ func GetAddresses() ServiceAddresses {
 		TaskService:       getEnv("TASK_SERVICE_ADDRESS", "localhost:8005"),
 		PostService:       getEnv("POST_SERVICE_ADDRESS", "localhost:8006"),
 		StorageService:    getEnv("STORAGE_SERVICE_ADDRESS", "localhost:8007"),
+		UserService:       getEnv("USER_SERVICE_ADDRESS", "localhost:8008"),
 	}
 }
 

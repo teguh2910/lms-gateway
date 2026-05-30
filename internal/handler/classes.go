@@ -1,252 +1,188 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"lms-gateway/internal/grpcclient"
-
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protowire"
+	classespb "lms-gateway/pb/class/classes"
+	genericpb "lms-gateway/pb/class/generic"
 )
 
-func ListClasses(w http.ResponseWriter, r *http.Request) {
+func classConn(w http.ResponseWriter) (*grpcConn, bool) {
 	addr := grpcclient.GetAddresses().ClassService
 	conn, err := grpcclient.Dial(addr)
 	if err != nil {
 		writeError(w, http.StatusServiceUnavailable, "class service unavailable")
+		return nil, false
+	}
+	return &grpcConn{conn: conn}, true
+}
+
+// --- Classes ---
+
+func ListClasses(w http.ResponseWriter, r *http.Request) {
+	c, ok := classConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
+	client := classespb.NewClassServiceClient(c.conn)
 	ctx := grpcclient.ContextWithMetadata(r)
-
-	var buf []byte
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
-	keyword := r.URL.Query().Get("keyword")
-
-	var paginationBuf []byte
-	if limit != "" {
-		l := parseUint(limit)
-		paginationBuf = protowire.AppendTag(paginationBuf, 1, protowire.VarintType)
-		paginationBuf = protowire.AppendVarint(paginationBuf, uint64(l))
-	}
-	if offset != "" {
-		o := parseUint(offset)
-		paginationBuf = protowire.AppendTag(paginationBuf, 2, protowire.VarintType)
-		paginationBuf = protowire.AppendVarint(paginationBuf, uint64(o))
-	}
-	if keyword != "" {
-		paginationBuf = protowire.AppendTag(paginationBuf, 3, protowire.BytesType)
-		paginationBuf = protowire.AppendString(paginationBuf, keyword)
-	}
-
-	if len(paginationBuf) > 0 {
-		buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-		buf = protowire.AppendBytes(buf, paginationBuf)
-	}
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/classes.ClassService/List", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	resp, err := client.List(ctx, &classespb.ClassListInput{
+		Pagination: &genericpb.Pagination{
+			Limit:   parseUint(r.URL.Query().Get("limit")),
+			Offset:  parseUint(r.URL.Query().Get("offset")),
+			Keyword: r.URL.Query().Get("keyword"),
+		},
+	})
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func GetClass(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ClassService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "class service unavailable")
+	c, ok := classConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
+	client := classespb.NewClassServiceClient(c.conn)
 	ctx := grpcclient.ContextWithMetadata(r)
-
-	var buf []byte
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, id)
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/classes.ClassService/Get", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	resp, err := client.Get(ctx, &genericpb.Id{Id: r.PathValue("id")})
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func CreateClass(w http.ResponseWriter, r *http.Request) {
-	addr := grpcclient.GetAddresses().ClassService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "class service unavailable")
+	c, ok := classConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
-	ctx := grpcclient.ContextWithMetadata(r)
-
-	var input map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	in := &classespb.ClassInput{}
+	if err := readProto(r, in); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
-	var buf []byte
-	buf = appendStringField(buf, 1, input, "subject_id")
-	buf = appendStringField(buf, 2, input, "name")
-	buf = appendStringField(buf, 3, input, "description")
-	buf = appendIntField(buf, 4, input, "semester")
-	buf = appendStringField(buf, 5, input, "academic_year")
-	buf = appendStringField(buf, 6, input, "teacher_id")
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/classes.ClassService/Create", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	client := classespb.NewClassServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Create(ctx, in)
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func UpdateClass(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ClassService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "class service unavailable")
+	c, ok := classConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
-	ctx := grpcclient.ContextWithMetadata(r)
-
-	var input map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	in := &classespb.Class{}
+	if err := readProto(r, in); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
-	var buf []byte
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, id)
-	buf = appendStringField(buf, 2, input, "subject_id")
-	buf = appendStringField(buf, 3, input, "name")
-	buf = appendStringField(buf, 4, input, "description")
-	buf = appendIntField(buf, 5, input, "semester")
-	buf = appendStringField(buf, 6, input, "academic_year")
-	buf = appendStringField(buf, 7, input, "teacher_id")
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/classes.ClassService/Update", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	in.Id = r.PathValue("id")
+	client := classespb.NewClassServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Update(ctx, in)
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func DeleteClass(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ClassService
-	invokeDelete(w, r, addr, "/classes.ClassService/Delete", id)
-}
-
-func ListSubjectClasses(w http.ResponseWriter, r *http.Request) {
-	addr := grpcclient.GetAddresses().ClassService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "class service unavailable")
+	c, ok := classConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
+	client := classespb.NewClassServiceClient(c.conn)
 	ctx := grpcclient.ContextWithMetadata(r)
-
-	var buf []byte
-	subjectID := r.URL.Query().Get("subject_id")
-	classID := r.URL.Query().Get("class_id")
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
-
-	if subjectID != "" {
-		buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-		buf = protowire.AppendString(buf, subjectID)
-	}
-	if classID != "" {
-		buf = protowire.AppendTag(buf, 2, protowire.BytesType)
-		buf = protowire.AppendString(buf, classID)
-	}
-
-	var paginationBuf []byte
-	if limit != "" {
-		l := parseUint(limit)
-		paginationBuf = protowire.AppendTag(paginationBuf, 1, protowire.VarintType)
-		paginationBuf = protowire.AppendVarint(paginationBuf, uint64(l))
-	}
-	if offset != "" {
-		o := parseUint(offset)
-		paginationBuf = protowire.AppendTag(paginationBuf, 2, protowire.VarintType)
-		paginationBuf = protowire.AppendVarint(paginationBuf, uint64(o))
-	}
-	if len(paginationBuf) > 0 {
-		buf = protowire.AppendTag(buf, 3, protowire.BytesType)
-		buf = protowire.AppendBytes(buf, paginationBuf)
-	}
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/classes.SubjectClassService/List", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	resp, err := client.Delete(ctx, &genericpb.Id{Id: r.PathValue("id")})
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
+	writeProto(w, resp)
+}
 
-	writeProtoJSON(w, resp.data)
+// --- Subject Classes ---
+
+func ListSubjectClasses(w http.ResponseWriter, r *http.Request) {
+	c, ok := classConn(w)
+	if !ok {
+		return
+	}
+	defer c.Close()
+
+	client := classespb.NewSubjectClassServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.List(ctx, &classespb.SubjectClassListInput{
+		Pagination: &genericpb.Pagination{
+			Limit:   parseUint(r.URL.Query().Get("limit")),
+			Offset:  parseUint(r.URL.Query().Get("offset")),
+			Keyword: r.URL.Query().Get("keyword"),
+		},
+		ClassId: r.URL.Query().Get("class_id"),
+	})
+	if err != nil {
+		handleGRPCError(w, err)
+		return
+	}
+	writeProto(w, resp)
 }
 
 func CreateSubjectClass(w http.ResponseWriter, r *http.Request) {
-	addr := grpcclient.GetAddresses().ClassService
-	conn, err := grpcclient.Dial(addr)
-	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "class service unavailable")
+	c, ok := classConn(w)
+	if !ok {
 		return
 	}
-	defer conn.Close()
+	defer c.Close()
 
-	ctx := grpcclient.ContextWithMetadata(r)
-
-	var input map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	in := &classespb.SubjectClassInput{}
+	if err := readProto(r, in); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-
-	var buf []byte
-	buf = appendStringField(buf, 1, input, "subject_id")
-	buf = appendStringField(buf, 2, input, "class_id")
-
-	var resp rawMessage
-	err = conn.Invoke(ctx, "/classes.SubjectClassService/Create", &rawMessage{data: buf}, &resp, grpc.ForceCodec(rawCodec{}))
+	client := classespb.NewSubjectClassServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Create(ctx, in)
 	if err != nil {
 		handleGRPCError(w, err)
 		return
 	}
-
-	writeProtoJSON(w, resp.data)
+	writeProto(w, resp)
 }
 
 func DeleteSubjectClass(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	addr := grpcclient.GetAddresses().ClassService
-	invokeDelete(w, r, addr, "/classes.SubjectClassService/Delete", id)
+	c, ok := classConn(w)
+	if !ok {
+		return
+	}
+	defer c.Close()
+
+	client := classespb.NewSubjectClassServiceClient(c.conn)
+	ctx := grpcclient.ContextWithMetadata(r)
+	resp, err := client.Delete(ctx, &genericpb.Id{Id: r.PathValue("id")})
+	if err != nil {
+		handleGRPCError(w, err)
+		return
+	}
+	writeProto(w, resp)
 }

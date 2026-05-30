@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { apiGet, apiPost, apiDelete } from '../api';
 
 export default function Quizzes() {
   const [quizId, setQuizId] = useState('');
   const [quiz, setQuiz] = useState<Record<string, unknown> | null>(null);
+  const [scores, setScores] = useState<Record<string, unknown>[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', class_id: '', duration_minutes: 60, start_time: '', end_time: '' });
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    subject_class_id: '', topic_subject_id: '', name: '', description: '', end_date: '',
+  });
 
   const loadQuiz = async () => {
     if (!quizId) return;
@@ -13,17 +17,20 @@ export default function Quizzes() {
     setQuiz(data);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await apiPost('/quizzes', form);
-    setShowForm(false);
-    alert('Quiz created');
+  const loadScores = async () => {
+    if (!quizId) return;
+    const data = await apiGet(`/quizzes/${quizId}/scores`);
+    setScores(data?.scores || []);
   };
 
-  const handleUpdate = async () => {
-    if (!quizId) return;
-    await apiPut(`/quizzes/${quizId}`, form);
-    alert('Quiz updated');
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    const res = await apiPost('/quizzes', form);
+    if (res?.error) { setError(res.error); return; }
+    setShowForm(false);
+    if (res?.id) setQuizId(res.id);
+    alert('Quiz created: ' + (res?.id || ''));
   };
 
   const handleDelete = async () => {
@@ -42,19 +49,40 @@ export default function Quizzes() {
         <button className="btn-primary" onClick={() => setShowForm(true)}>+ New Quiz</button>
       </div>
 
+      {error && <div className="error-banner">{error}</div>}
+
       <div className="search-bar">
         <input placeholder="Enter Quiz ID" value={quizId} onChange={e => setQuizId(e.target.value)} />
         <button className="btn-primary" onClick={loadQuiz}>Load</button>
+        <button className="btn-secondary" onClick={loadScores}>View Scores</button>
       </div>
 
-      {quiz && (
+      {quiz && !quiz.error && (
         <div className="detail-card">
-          <h3>Quiz Details</h3>
-          <pre>{JSON.stringify(quiz, null, 2)}</pre>
+          <h3>{String(quiz.name || 'Quiz')}</h3>
+          <p>{String(quiz.description || '')}</p>
+          <p><strong>End date:</strong> {String(quiz.end_date || '-')}</p>
+          <p><strong>Questions:</strong> {Array.isArray(quiz.question) ? quiz.question.length : 0}</p>
           <div className="form-actions">
-            <button className="btn-sm" onClick={handleUpdate}>Update</button>
             <button className="btn-sm btn-danger" onClick={handleDelete}>Delete</button>
           </div>
+        </div>
+      )}
+
+      {scores.length > 0 && (
+        <div className="table-container">
+          <table>
+            <thead><tr><th>Student ID</th><th>Score</th><th>Created</th></tr></thead>
+            <tbody>
+              {scores.map((s, i) => (
+                <tr key={i}>
+                  <td>{String(s.student_id)}</td>
+                  <td>{String(s.score)}</td>
+                  <td>{String(s.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -63,28 +91,24 @@ export default function Quizzes() {
           <h3>Create Quiz</h3>
           <form onSubmit={handleCreate}>
             <div className="form-group">
-              <label>Title</label>
-              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+              <label>Name</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="form-group">
               <label>Description</label>
-              <input value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+              <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Class ID</label>
-              <input value={form.class_id} onChange={e => setForm({...form, class_id: e.target.value})} />
+              <label>Subject Class ID</label>
+              <input value={form.subject_class_id} onChange={e => setForm({ ...form, subject_class_id: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Duration (minutes)</label>
-              <input type="number" value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: +e.target.value})} />
+              <label>Topic Subject ID</label>
+              <input value={form.topic_subject_id} onChange={e => setForm({ ...form, topic_subject_id: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Start Time</label>
-              <input type="datetime-local" value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>End Time</label>
-              <input type="datetime-local" value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} />
+              <label>End Date</label>
+              <input type="datetime-local" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-primary">Create</button>

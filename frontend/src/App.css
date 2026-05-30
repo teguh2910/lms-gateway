@@ -306,3 +306,76 @@ th {
   border-radius: 4px;
   margin-bottom: 16px;
 }
+
+/* --- Additions for refactored pages --- */
+.error-banner {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fca5a5;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+td.empty, .empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+.form-group.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.form-group.checkbox input {
+  width: auto;
+}
+
+/* --- User/auth additions --- */
+.login-switch {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.login-hint {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.badge-admin { background: #fee2e2; color: #b91c1c; }
+.badge-teacher { background: #dbeafe; color: #1d4ed8; }
+.badge-student { background: #dcfce7; color: #15803d; }

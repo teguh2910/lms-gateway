@@ -1,30 +1,59 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
 
+interface Class {
+  id: string;
+  university_id?: string;
+  university_name?: string;
+  faculty_id?: string;
+  faculty_name?: string;
+  programme_id?: string;
+  programme_name?: string;
+  code?: string;
+  name?: string;
+}
+
+const emptyForm = {
+  university_id: '', university_name: '', faculty_id: '', faculty_name: '',
+  programme_id: '', programme_name: '', code: '', name: '',
+};
+
 export default function Classes() {
-  const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [items, setItems] = useState<Class[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', subject_id: '', semester: 1, academic_year: '' });
+  const [form, setForm] = useState({ ...emptyForm });
+  const [error, setError] = useState('');
 
   const load = async () => {
     const data = await apiGet('/classes?limit=50&offset=0');
-    if (Array.isArray(data)) setItems(data);
-    else setItems([]);
+    setItems(data?.classes || []);
   };
 
   useEffect(() => { load(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editing) {
-      await apiPut(`/classes/${editing}`, form);
-    } else {
-      await apiPost('/classes', form);
-    }
+    setError('');
+    const res = editing
+      ? await apiPut(`/classes/${editing}`, form)
+      : await apiPost('/classes', form);
+    if (res?.error) { setError(res.error); return; }
     setShowForm(false);
     setEditing(null);
+    setForm({ ...emptyForm });
     load();
+  };
+
+  const handleEdit = (c: Class) => {
+    setEditing(c.id);
+    setForm({
+      university_id: c.university_id || '', university_name: c.university_name || '',
+      faculty_id: c.faculty_id || '', faculty_name: c.faculty_name || '',
+      programme_id: c.programme_id || '', programme_name: c.programme_name || '',
+      code: c.code || '', name: c.name || '',
+    });
+    setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -38,34 +67,46 @@ export default function Classes() {
     <div className="page">
       <div className="page-header">
         <h1>Classes</h1>
-        <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); }}>
+        <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
           + New Class
         </button>
       </div>
+
+      {error && <div className="error-banner">{error}</div>}
 
       {showForm && (
         <div className="form-card">
           <h3>{editing ? 'Edit Class' : 'Create Class'}</h3>
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Name</label>
-              <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Name</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Code</label>
+                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} required />
+              </div>
             </div>
-            <div className="form-group">
-              <label>Description</label>
-              <input value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+            <div className="form-row">
+              <div className="form-group">
+                <label>University ID</label>
+                <input value={form.university_id} onChange={e => setForm({ ...form, university_id: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>University Name</label>
+                <input value={form.university_name} onChange={e => setForm({ ...form, university_name: e.target.value })} />
+              </div>
             </div>
-            <div className="form-group">
-              <label>Subject ID</label>
-              <input value={form.subject_id} onChange={e => setForm({...form, subject_id: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Semester</label>
-              <input type="number" value={form.semester} onChange={e => setForm({...form, semester: +e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label>Academic Year</label>
-              <input value={form.academic_year} onChange={e => setForm({...form, academic_year: e.target.value})} />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Programme ID</label>
+                <input value={form.programme_id} onChange={e => setForm({ ...form, programme_id: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>Programme Name</label>
+                <input value={form.programme_name} onChange={e => setForm({ ...form, programme_name: e.target.value })} />
+              </div>
             </div>
             <div className="form-actions">
               <button type="submit" className="btn-primary">Save</button>
@@ -78,17 +119,19 @@ export default function Classes() {
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>ID</th><th>Name</th><th>Description</th><th>Actions</th></tr>
+            <tr><th>Code</th><th>Name</th><th>Programme</th><th>University</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item.id as string}>
-                <td>{item.id as string}</td>
-                <td>{(item.field_3 || item.field_2 || '-') as string}</td>
-                <td>{(item.field_4 || item.field_3 || '-') as string}</td>
+            {items.length === 0 && <tr><td colSpan={5} className="empty">No classes yet</td></tr>}
+            {items.map((c) => (
+              <tr key={c.id}>
+                <td>{c.code}</td>
+                <td>{c.name}</td>
+                <td>{c.programme_name}</td>
+                <td>{c.university_name}</td>
                 <td>
-                  <button className="btn-sm" onClick={() => { setEditing(item.id as string); setShowForm(true); }}>Edit</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(item.id as string)}>Delete</button>
+                  <button className="btn-sm" onClick={() => handleEdit(c)}>Edit</button>
+                  <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Delete</button>
                 </td>
               </tr>
             ))}

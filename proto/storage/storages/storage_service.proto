@@ -1,0 +1,12 @@
+syntax = "proto3";
+package storages;
+
+option go_package = "lms-gateway/pb/storage/storages;storages";
+
+import "storage/storages/storage_message.proto";
+
+service StorageService {
+    rpc Upload(stream UploadRequest) returns (UploadResponse);
+    rpc GetFile(GetFileRequest) returns (GetFileResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
