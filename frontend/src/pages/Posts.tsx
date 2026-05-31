@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiGet, apiPost } from '../api';
+import { apiGet, apiPost, can } from '../api';
 import { IconPlus } from '../components/Icons';
 
 const POST_TYPES = [
@@ -62,9 +62,9 @@ export default function Posts() {
       <div className="page-header">
         <div>
           <h1>Posts</h1>
-          <p className="subtitle">Share announcements and discussions</p>
+          <p className="subtitle">{can.managePosts() ? 'Share announcements and discussions' : 'Read posts and join discussions'}</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Post</button>
+        {can.managePosts() && <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Post</button>}
       </div>
 
       {error && <div className="error-banner">{error}</div>}

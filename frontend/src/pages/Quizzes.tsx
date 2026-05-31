@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiGet, apiPost, apiDelete } from '../api';
+import { apiGet, apiPost, apiDelete, can } from '../api';
 import { IconPlus } from '../components/Icons';
 
 export default function Quizzes() {
@@ -48,9 +48,9 @@ export default function Quizzes() {
       <div className="page-header">
         <div>
           <h1>Quizzes</h1>
-          <p className="subtitle">Create assessments and review scores</p>
+          <p className="subtitle">{can.manageQuizzes() ? 'Create assessments and review scores' : 'Take quizzes and view your results'}</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Quiz</button>
+        {can.manageQuizzes() && <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Quiz</button>}
       </div>
 
       {error && <div className="error-banner">{error}</div>}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiGet, apiPost, apiDelete } from '../api';
+import { apiGet, apiPost, apiDelete, can } from '../api';
 import { IconPlus } from '../components/Icons';
 
 export default function Tasks() {
@@ -51,9 +51,9 @@ export default function Tasks() {
       <div className="page-header">
         <div>
           <h1>Tasks</h1>
-          <p className="subtitle">Assign work and grade submissions</p>
+          <p className="subtitle">{can.manageTasks() ? 'Assign work and grade submissions' : 'View and submit your assignments'}</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Task</button>
+        {can.manageTasks() && <button className="btn-primary" onClick={() => setShowForm(true)}><IconPlus /> New Task</button>}
       </div>
 
       {error && <div className="error-banner">{error}</div>}

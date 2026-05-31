@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { apiGet, apiPost, apiPut, apiDelete, can } from '../api';
 import { IconPlus, IconEdit, IconTrash } from '../components/Icons';
 
 interface Subject {
@@ -27,6 +27,7 @@ export default function Subjects() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [error, setError] = useState('');
+  const manage = can.manageSubjects();
 
   const load = async () => {
     const data = await apiGet('/subjects?limit=50&offset=0');
@@ -71,11 +72,13 @@ export default function Subjects() {
       <div className="page-header">
         <div>
           <h1>Subjects</h1>
-          <p className="subtitle">Manage course subjects and their topics</p>
+          <p className="subtitle">{manage ? 'Manage course subjects and their topics' : 'Browse course subjects'}</p>
         </div>
-        <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
-          <IconPlus /> New Subject
-        </button>
+        {manage && (
+          <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
+            <IconPlus /> New Subject
+          </button>
+        )}
       </div>
 
       {error && <div className="error-banner">{error}</div>}
@@ -135,11 +138,11 @@ export default function Subjects() {
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>Code</th><th>Name</th><th>SKS</th><th>Semester</th><th>Programme</th><th>Actions</th></tr>
+            <tr><th>Code</th><th>Name</th><th>SKS</th><th>Semester</th><th>Programme</th>{manage && <th>Actions</th>}</tr>
           </thead>
           <tbody>
             {subjects.length === 0 && (
-              <tr><td colSpan={6} className="empty">No subjects yet</td></tr>
+              <tr><td colSpan={manage ? 6 : 5} className="empty">No subjects yet</td></tr>
             )}
             {subjects.map(s => (
               <tr key={s.id}>
@@ -148,10 +151,12 @@ export default function Subjects() {
                 <td>{s.sks}</td>
                 <td>{s.default_semester}</td>
                 <td>{s.programme_name}</td>
-                <td>
-                  <button className="btn-sm" onClick={() => handleEdit(s)}><IconEdit /> Edit</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(s.id)}><IconTrash /> Delete</button>
-                </td>
+                {manage && (
+                  <td>
+                    <button className="btn-sm" onClick={() => handleEdit(s)}><IconEdit /> Edit</button>
+                    <button className="btn-sm btn-danger" onClick={() => handleDelete(s.id)}><IconTrash /> Delete</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

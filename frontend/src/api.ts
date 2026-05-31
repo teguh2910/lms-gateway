@@ -51,13 +51,62 @@ export function isLoggedIn(): boolean {
   return !!localStorage.getItem('token');
 }
 
+export type Role = 'admin' | 'teacher' | 'student';
+
+export interface CurrentUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  universityId: string;
+  universityName: string;
+  programStudiId: string;
+  programStudiName: string;
+  classId: string;
+  className: string;
+  nim: string;
+}
+
+export function currentUser(): CurrentUser {
+  return {
+    id: localStorage.getItem('user_id') || '',
+    name: localStorage.getItem('user_name') || 'User',
+    email: localStorage.getItem('user_email') || '',
+    role: (localStorage.getItem('user_role') as Role) || 'student',
+    universityId: localStorage.getItem('university_id') || '',
+    universityName: localStorage.getItem('university_name') || '',
+    programStudiId: localStorage.getItem('program_studi_id') || '',
+    programStudiName: localStorage.getItem('program_studi_name') || '',
+    classId: localStorage.getItem('class_id') || '',
+    className: localStorage.getItem('class_name') || '',
+    nim: localStorage.getItem('nim') || '',
+  };
+}
+
+export function getRole(): Role {
+  return (localStorage.getItem('user_role') as Role) || 'student';
+}
+
+// Capability flags per role
+export const can = {
+  manageUsers: (r: Role = getRole()) => r === 'admin',
+  manageSubjects: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  manageClasses: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  manageConferences: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  manageMaterials: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  manageQuizzes: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  manageTasks: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  managePosts: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  gradeTasks: (r: Role = getRole()) => r === 'admin' || r === 'teacher',
+  // students can take quizzes, submit tasks, join conferences, comment, download
+  takeQuiz: (r: Role = getRole()) => r === 'student',
+  submitTask: (r: Role = getRole()) => r === 'student',
+  // every authenticated user that belongs to a class can view its roster
+  viewClassmates: () => !!localStorage.getItem('class_id'),
+};
+
 export function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user_id');
-  localStorage.removeItem('university_id');
-  localStorage.removeItem('program_studi_id');
-  localStorage.removeItem('user_name');
-  localStorage.removeItem('user_email');
-  localStorage.removeItem('user_role');
+  localStorage.clear();
   window.location.href = '/';
 }
+

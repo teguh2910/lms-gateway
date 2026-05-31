@@ -23,7 +23,8 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 			Offset:  parseUint(r.URL.Query().Get("offset")),
 			Keyword: r.URL.Query().Get("keyword"),
 		},
-		Role: r.URL.Query().Get("role"),
+		Role:    r.URL.Query().Get("role"),
+		ClassId: r.URL.Query().Get("class_id"),
 	})
 	if err != nil {
 		handleGRPCError(w, err)

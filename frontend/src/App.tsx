@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
-import { isLoggedIn, logout } from './api';
+import { isLoggedIn, logout, getRole, type Role } from './api';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Subjects from './pages/Subjects';
 import Classes from './pages/Classes';
+import MyClass from './pages/MyClass';
 import Conferences from './pages/Conferences';
 import Materials from './pages/Materials';
 import Quizzes from './pages/Quizzes';
@@ -19,20 +20,29 @@ import {
 import { useTheme } from './theme';
 import './App.css';
 
-const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: IconGrid },
-  { to: '/subjects', label: 'Subjects', icon: IconBook },
-  { to: '/classes', label: 'Classes', icon: IconUsers },
-  { to: '/conferences', label: 'Conferences', icon: IconVideo },
-  { to: '/materials', label: 'Materials', icon: IconFolder },
-  { to: '/quizzes', label: 'Quizzes', icon: IconQuiz },
-  { to: '/tasks', label: 'Tasks', icon: IconTask },
-  { to: '/posts', label: 'Posts', icon: IconChat },
-  { to: '/users', label: 'Users', icon: IconShield },
+type NavEntry = {
+  to: string;
+  label: string;
+  icon: typeof IconGrid;
+  roles: Role[];
+};
+
+const NAV: NavEntry[] = [
+  { to: '/dashboard', label: 'Dashboard', icon: IconGrid, roles: ['admin', 'teacher', 'student'] },
+  { to: '/subjects', label: 'Subjects', icon: IconBook, roles: ['admin', 'teacher', 'student'] },
+  { to: '/classes', label: 'Classes', icon: IconUsers, roles: ['admin', 'teacher', 'student'] },
+  { to: '/my-class', label: 'My Class', icon: IconUsers, roles: ['teacher', 'student'] },
+  { to: '/conferences', label: 'Conferences', icon: IconVideo, roles: ['admin', 'teacher', 'student'] },
+  { to: '/materials', label: 'Materials', icon: IconFolder, roles: ['admin', 'teacher', 'student'] },
+  { to: '/quizzes', label: 'Quizzes', icon: IconQuiz, roles: ['admin', 'teacher', 'student'] },
+  { to: '/tasks', label: 'Tasks', icon: IconTask, roles: ['admin', 'teacher', 'student'] },
+  { to: '/posts', label: 'Posts', icon: IconChat, roles: ['admin', 'teacher', 'student'] },
+  { to: '/users', label: 'Users', icon: IconShield, roles: ['admin'] },
 ];
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: Role[] }) {
   if (!isLoggedIn()) return <Navigate to="/login" />;
+  if (roles && !roles.includes(getRole())) return <Navigate to="/dashboard" />;
   return <>{children}</>;
 }
 
@@ -50,10 +60,12 @@ function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggle } = useTheme();
   const location = useLocation();
   const name = localStorage.getItem('user_name') || 'User';
-  const role = localStorage.getItem('user_role') || 'student';
+  const role = getRole();
   const email = localStorage.getItem('user_email') || '';
+  const className = localStorage.getItem('class_name') || '';
 
-  const current = NAV.find((n) => n.to === location.pathname);
+  const navItems = NAV.filter((n) => n.roles.includes(role));
+  const current = navItems.find((n) => n.to === location.pathname);
   const title = current?.label || 'Dashboard';
 
   return (
@@ -71,7 +83,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
         <nav className="nav">
           <p className="nav-label">Menu</p>
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -89,7 +101,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             <div className="avatar">{initials(name)}</div>
             <div className="user-meta">
               <span className="user-name">{name}</span>
-              <span className="user-role">{role}</span>
+              <span className="user-role">{role}{className ? ` · ${className}` : ''}</span>
             </div>
           </div>
           <button onClick={logout} className="logout-btn" title="Logout">
@@ -108,6 +120,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             <span className="crumbs">Edura / {title}</span>
           </div>
           <div className="topbar-actions">
+            <span className={`role-chip role-${role}`}>{role}</span>
             <button
               className="icon-btn theme-toggle"
               onClick={toggle}
@@ -144,12 +157,13 @@ export default function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
         <Route path="/subjects" element={<ProtectedRoute><Layout><Subjects /></Layout></ProtectedRoute>} />
         <Route path="/classes" element={<ProtectedRoute><Layout><Classes /></Layout></ProtectedRoute>} />
+        <Route path="/my-class" element={<ProtectedRoute roles={['teacher', 'student']}><Layout><MyClass /></Layout></ProtectedRoute>} />
         <Route path="/conferences" element={<ProtectedRoute><Layout><Conferences /></Layout></ProtectedRoute>} />
         <Route path="/materials" element={<ProtectedRoute><Layout><Materials /></Layout></ProtectedRoute>} />
         <Route path="/quizzes" element={<ProtectedRoute><Layout><Quizzes /></Layout></ProtectedRoute>} />
         <Route path="/tasks" element={<ProtectedRoute><Layout><Tasks /></Layout></ProtectedRoute>} />
         <Route path="/posts" element={<ProtectedRoute><Layout><Posts /></Layout></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><Layout><Users /></Layout></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute roles={['admin']}><Layout><Users /></Layout></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

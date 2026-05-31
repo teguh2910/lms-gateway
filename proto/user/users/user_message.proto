@@ -18,6 +18,9 @@ message User {
     string updated_by = 10;
     string updated_at = 11;
     string created_at = 12;
+    string class_id = 13;
+    string class_name = 14;
+    string nim = 15; // student number (NIM) or staff number (NIP)
 }
 
 message UserList {
@@ -28,6 +31,7 @@ message UserList {
 message UserListInput {
     lms_user_services.Pagination pagination = 1;
     string role = 2;
+    string class_id = 3;
 }
 
 message RegisterInput {
@@ -39,6 +43,9 @@ message RegisterInput {
     string university_name = 6;
     string program_studi_id = 7;
     string program_studi_name = 8;
+    string class_id = 9;
+    string class_name = 10;
+    string nim = 11;
 }
 
 message LoginInput {
@@ -61,6 +68,9 @@ message UpdateUserInput {
     string program_studi_id = 6;
     string program_studi_name = 7;
     bool is_active = 8;
+    string class_id = 9;
+    string class_name = 10;
+    string nim = 11;
 }
 
 message ChangePasswordInput {

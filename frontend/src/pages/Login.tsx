@@ -20,7 +20,12 @@ export default function Login() {
     localStorage.setItem('token', String(data.token || ''));
     localStorage.setItem('user_id', String(user.id || ''));
     localStorage.setItem('university_id', String(user.university_id || ''));
+    localStorage.setItem('university_name', String(user.university_name || ''));
     localStorage.setItem('program_studi_id', String(user.program_studi_id || ''));
+    localStorage.setItem('program_studi_name', String(user.program_studi_name || ''));
+    localStorage.setItem('class_id', String(user.class_id || ''));
+    localStorage.setItem('class_name', String(user.class_name || ''));
+    localStorage.setItem('nim', String(user.nim || ''));
     localStorage.setItem('user_name', String(user.name || ''));
     localStorage.setItem('user_email', String(user.email || ''));
     localStorage.setItem('user_role', String(user.role || ''));

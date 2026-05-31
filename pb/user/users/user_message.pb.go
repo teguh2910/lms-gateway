@@ -36,6 +36,9 @@ type User struct {
 	UpdatedBy        string                 `protobuf:"bytes,10,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
 	UpdatedAt        string                 `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	CreatedAt        string                 `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ClassId          string                 `protobuf:"bytes,13,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ClassName        string                 `protobuf:"bytes,14,opt,name=class_name,json=className,proto3" json:"class_name,omitempty"`
+	Nim              string                 `protobuf:"bytes,15,opt,name=nim,proto3" json:"nim,omitempty"` // student number (NIM) or staff number (NIP)
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -154,6 +157,27 @@ func (x *User) GetCreatedAt() string {
 	return ""
 }
 
+func (x *User) GetClassId() string {
+	if x != nil {
+		return x.ClassId
+	}
+	return ""
+}
+
+func (x *User) GetClassName() string {
+	if x != nil {
+		return x.ClassName
+	}
+	return ""
+}
+
+func (x *User) GetNim() string {
+	if x != nil {
+		return x.Nim
+	}
+	return ""
+}
+
 type UserList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
@@ -210,6 +234,7 @@ type UserListInput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Pagination    *generic.Pagination    `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	ClassId       string                 `protobuf:"bytes,3,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -258,6 +283,13 @@ func (x *UserListInput) GetRole() string {
 	return ""
 }
 
+func (x *UserListInput) GetClassId() string {
+	if x != nil {
+		return x.ClassId
+	}
+	return ""
+}
+
 type RegisterInput struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Email            string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
@@ -268,6 +300,9 @@ type RegisterInput struct {
 	UniversityName   string                 `protobuf:"bytes,6,opt,name=university_name,json=universityName,proto3" json:"university_name,omitempty"`
 	ProgramStudiId   string                 `protobuf:"bytes,7,opt,name=program_studi_id,json=programStudiId,proto3" json:"program_studi_id,omitempty"`
 	ProgramStudiName string                 `protobuf:"bytes,8,opt,name=program_studi_name,json=programStudiName,proto3" json:"program_studi_name,omitempty"`
+	ClassId          string                 `protobuf:"bytes,9,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ClassName        string                 `protobuf:"bytes,10,opt,name=class_name,json=className,proto3" json:"class_name,omitempty"`
+	Nim              string                 `protobuf:"bytes,11,opt,name=nim,proto3" json:"nim,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -354,6 +389,27 @@ func (x *RegisterInput) GetProgramStudiId() string {
 func (x *RegisterInput) GetProgramStudiName() string {
 	if x != nil {
 		return x.ProgramStudiName
+	}
+	return ""
+}
+
+func (x *RegisterInput) GetClassId() string {
+	if x != nil {
+		return x.ClassId
+	}
+	return ""
+}
+
+func (x *RegisterInput) GetClassName() string {
+	if x != nil {
+		return x.ClassName
+	}
+	return ""
+}
+
+func (x *RegisterInput) GetNim() string {
+	if x != nil {
+		return x.Nim
 	}
 	return ""
 }
@@ -480,6 +536,9 @@ type UpdateUserInput struct {
 	ProgramStudiId   string                 `protobuf:"bytes,6,opt,name=program_studi_id,json=programStudiId,proto3" json:"program_studi_id,omitempty"`
 	ProgramStudiName string                 `protobuf:"bytes,7,opt,name=program_studi_name,json=programStudiName,proto3" json:"program_studi_name,omitempty"`
 	IsActive         bool                   `protobuf:"varint,8,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	ClassId          string                 `protobuf:"bytes,9,opt,name=class_id,json=classId,proto3" json:"class_id,omitempty"`
+	ClassName        string                 `protobuf:"bytes,10,opt,name=class_name,json=className,proto3" json:"class_name,omitempty"`
+	Nim              string                 `protobuf:"bytes,11,opt,name=nim,proto3" json:"nim,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -568,6 +627,27 @@ func (x *UpdateUserInput) GetIsActive() bool {
 		return x.IsActive
 	}
 	return false
+}
+
+func (x *UpdateUserInput) GetClassId() string {
+	if x != nil {
+		return x.ClassId
+	}
+	return ""
+}
+
+func (x *UpdateUserInput) GetClassName() string {
+	if x != nil {
+		return x.ClassName
+	}
+	return ""
+}
+
+func (x *UpdateUserInput) GetNim() string {
+	if x != nil {
+		return x.Nim
+	}
+	return ""
 }
 
 type ChangePasswordInput struct {
@@ -730,7 +810,7 @@ var File_user_users_user_message_proto protoreflect.FileDescriptor
 
 const file_user_users_user_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1duser/users/user_message.proto\x12\x05users\x1a\"user/generic/generic_message.proto\"\xf4\x02\n" +
+	"\x1duser/users/user_message.proto\x12\x05users\x1a\"user/generic/generic_message.proto\"\xc0\x03\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
@@ -747,15 +827,20 @@ const file_user_users_user_message_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\v \x01(\tR\tupdatedAt\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\f \x01(\tR\tcreatedAt\"C\n" +
+	"created_at\x18\f \x01(\tR\tcreatedAt\x12\x19\n" +
+	"\bclass_id\x18\r \x01(\tR\aclassId\x12\x1d\n" +
+	"\n" +
+	"class_name\x18\x0e \x01(\tR\tclassName\x12\x10\n" +
+	"\x03nim\x18\x0f \x01(\tR\x03nim\"C\n" +
 	"\bUserList\x12!\n" +
 	"\x05users\x18\x01 \x03(\v2\v.users.UserR\x05users\x12\x14\n" +
-	"\x05count\x18\x02 \x01(\rR\x05count\"b\n" +
+	"\x05count\x18\x02 \x01(\rR\x05count\"}\n" +
 	"\rUserListInput\x12=\n" +
 	"\n" +
 	"pagination\x18\x01 \x01(\v2\x1d.lms_user_services.PaginationR\n" +
 	"pagination\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\x8f\x02\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\x12\x19\n" +
+	"\bclass_id\x18\x03 \x01(\tR\aclassId\"\xdb\x02\n" +
 	"\rRegisterInput\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x12\n" +
@@ -764,7 +849,12 @@ const file_user_users_user_message_proto_rawDesc = "" +
 	"\runiversity_id\x18\x05 \x01(\tR\funiversityId\x12'\n" +
 	"\x0funiversity_name\x18\x06 \x01(\tR\x0euniversityName\x12(\n" +
 	"\x10program_studi_id\x18\a \x01(\tR\x0eprogramStudiId\x12,\n" +
-	"\x12program_studi_name\x18\b \x01(\tR\x10programStudiName\">\n" +
+	"\x12program_studi_name\x18\b \x01(\tR\x10programStudiName\x12\x19\n" +
+	"\bclass_id\x18\t \x01(\tR\aclassId\x12\x1d\n" +
+	"\n" +
+	"class_name\x18\n" +
+	" \x01(\tR\tclassName\x12\x10\n" +
+	"\x03nim\x18\v \x01(\tR\x03nim\">\n" +
 	"\n" +
 	"LoginInput\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
@@ -773,7 +863,7 @@ const file_user_users_user_message_proto_rawDesc = "" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1f\n" +
 	"\x04user\x18\x02 \x01(\v2\v.users.UserR\x04user\x12\x1d\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\tR\texpiresAt\"\x8c\x02\n" +
+	"expires_at\x18\x03 \x01(\tR\texpiresAt\"\xd8\x02\n" +
 	"\x0fUpdateUserInput\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -782,7 +872,12 @@ const file_user_users_user_message_proto_rawDesc = "" +
 	"\x0funiversity_name\x18\x05 \x01(\tR\x0euniversityName\x12(\n" +
 	"\x10program_studi_id\x18\x06 \x01(\tR\x0eprogramStudiId\x12,\n" +
 	"\x12program_studi_name\x18\a \x01(\tR\x10programStudiName\x12\x1b\n" +
-	"\tis_active\x18\b \x01(\bR\bisActive\"k\n" +
+	"\tis_active\x18\b \x01(\bR\bisActive\x12\x19\n" +
+	"\bclass_id\x18\t \x01(\tR\aclassId\x12\x1d\n" +
+	"\n" +
+	"class_name\x18\n" +
+	" \x01(\tR\tclassName\x12\x10\n" +
+	"\x03nim\x18\v \x01(\tR\x03nim\"k\n" +
 	"\x13ChangePasswordInput\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fold_password\x18\x02 \x01(\tR\voldPassword\x12!\n" +

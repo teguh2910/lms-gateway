@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { apiGet, apiPost, apiPut, apiDelete, can } from '../api';
 import { IconPlus, IconEdit, IconTrash } from '../components/Icons';
 
 interface Class {
@@ -25,6 +25,7 @@ export default function Classes() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [error, setError] = useState('');
+  const manage = can.manageClasses();
 
   const load = async () => {
     const data = await apiGet('/classes?limit=50&offset=0');
@@ -69,11 +70,13 @@ export default function Classes() {
       <div className="page-header">
         <div>
           <h1>Classes</h1>
-          <p className="subtitle">Organize student classes by programme</p>
+          <p className="subtitle">{manage ? 'Organize student classes by programme' : 'Browse classes'}</p>
         </div>
-        <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
-          <IconPlus /> New Class
-        </button>
+        {manage && (
+          <button className="btn-primary" onClick={() => { setShowForm(true); setEditing(null); setForm({ ...emptyForm }); }}>
+            <IconPlus /> New Class
+          </button>
+        )}
       </div>
 
       {error && <div className="error-banner">{error}</div>}
@@ -123,20 +126,22 @@ export default function Classes() {
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>Code</th><th>Name</th><th>Programme</th><th>University</th><th>Actions</th></tr>
+            <tr><th>Code</th><th>Name</th><th>Programme</th><th>University</th>{manage && <th>Actions</th>}</tr>
           </thead>
           <tbody>
-            {items.length === 0 && <tr><td colSpan={5} className="empty">No classes yet</td></tr>}
+            {items.length === 0 && <tr><td colSpan={manage ? 5 : 4} className="empty">No classes yet</td></tr>}
             {items.map((c) => (
               <tr key={c.id}>
                 <td>{c.code}</td>
                 <td>{c.name}</td>
                 <td>{c.programme_name}</td>
                 <td>{c.university_name}</td>
-                <td>
-                  <button className="btn-sm" onClick={() => handleEdit(c)}><IconEdit /> Edit</button>
-                  <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}><IconTrash /> Delete</button>
-                </td>
+                {manage && (
+                  <td>
+                    <button className="btn-sm" onClick={() => handleEdit(c)}><IconEdit /> Edit</button>
+                    <button className="btn-sm btn-danger" onClick={() => handleDelete(c.id)}><IconTrash /> Delete</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
